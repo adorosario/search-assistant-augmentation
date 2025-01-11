@@ -58,74 +58,9 @@
     <button onclick="detectSite()">Analyze Site</button>
   </div>
   <div id="result"></div>
-
-  <script>
-    const CMS_PATTERNS = {
-      'WordPress': {
-        signatures: [
-          'wp-content',
-          'wp-includes',
-          'generator" content="wordpress'
-        ],
-        searchPatterns: [
-          'input[name="s"]',                  
-          '.search-field',                   
-          'form[role="search"] input',     
-          'input.wp-block-search__input',      
-          '.wp-search-form input',
-        ]
-      },
-      'Webflow': {
-        signatures: [
-          'webflow.js',
-          'generator" content="webflow',
-          'w-nav'
-        ],
-        searchPatterns: [
-          '.w-form-input[type="search"]',      
-          '.search-input',                     
-          '[data-search-input]'                
-        ]
-      },
-      'Docusaurus': {
-        signatures: [
-          'generator" content="docusaurus',
-          'docusaurus.config',
-          'docs-doc-page'
-        ],
-        searchPatterns: [
-          '.DocSearch-Input',
-          '.DocSearch-Button',                  
-          '#docsearch-input',                 
-          '.navbar__search-input'   
-        ]
-      },
-      'GitBook': {
-        signatures: [
-          'generator" content="gitbook',
-          'gitbook.js',
-          'gitbook-plugin'
-        ],
-        searchPatterns: [
-          '.book-search-input',               
-          '.gitbook-search-input',            
-          '.searchbox input'                  
-        ]
-      },
-      'Zendesk': {
-        signatures: [
-          'zendesk-widget',
-          'zendesk_app_framework',
-          '/hc/en-us/'
-        ],
-        searchPatterns: [
-          '.search-query',                    
-          '#query',                           
-          '.hc-search-input',                 
-          'input[name="query"]'             
-        ]
-      }
-    };
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script type="module">
+    import { CMS_PATTERNS } from './CMS_PATTERNS.js';
 
     function findSearchBoxes(html, detectedCMS) {
       const parser = new DOMParser();
@@ -176,24 +111,33 @@
       return searchBoxes;
     }
 
-    async function detectSite() {
-      const url = document.getElementById('urlInput').value;
-      const result = document.getElementById('result');
-      if(!url){
-       result.innerHTML = `Invalid URl!`;
-       return
-      }
-             
+  async function detectSite() {
+     const input = document.getElementById('urlInput').value;
+  const result = document.getElementById('result');
 
-      result.innerHTML = 'Analyzing site...';
+  if (!input) {
+    result.innerHTML = `Invalid input! Please enter a domain name or URL.`;
+    return;
+  }
+
+  const formatInputAsUrl = (input) => {
+    try {
+      new URL(input);
+      return input;
+    } catch {
+      return `https://${input}`;
+    }
+  };
+   const url = formatInputAsUrl(input);
+
+  result.innerHTML = 'Analyzing site...';
       
       try {
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
-        const data = await response.json();
-        const html = data.contents;
+       const response = await axios.get(proxyUrl);
+        const html = response.data.contents;
+        console.log(html);
         
-        // Detect CMS
         let detectedCMS = 'Unknown';
         for (const [cms, config] of Object.entries(CMS_PATTERNS)) {
           if (config.signatures.some(sign => html.toLowerCase().includes(sign.toLowerCase()))) {
@@ -228,6 +172,7 @@
         result.innerHTML = `Error: ${error.message}`;
       }
     }
+    window.detectSite = detectSite;
   </script>
 </body>
 </html>
