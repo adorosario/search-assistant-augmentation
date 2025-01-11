@@ -18,6 +18,10 @@ A lightweight, drop-in JavaScript solution that automatically detects and enhanc
 
 - 🔌 **Platform Agnostic**: Compatible with major documentation and marketing platforms
 
+## Live Demo
+
+[https://adorosario.github.io/search-assistant-augmentation/tester.html](https://adorosario.github.io/search-assistant-augmentation/tester.html)
+
 ## Quick Start
 
 Add the script to your website by including this single line in your footer or before the closing `</body>` tag:
