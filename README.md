@@ -1,3 +1,4 @@
+# Universal Search Box Augmentation Script
 
 A lightweight, drop-in JavaScript solution that automatically detects and enhances search functionality across various Content Management Systems (CMS) and documentation platforms.
 
@@ -22,7 +23,7 @@ A lightweight, drop-in JavaScript solution that automatically detects and enhanc
 Add the script to your website by including this single line in your footer or before the closing `</body>` tag:
 
 ```html
-<script src="https://path-to-your-cdn/augment.js"></script>
+<script src="https://adorosario.github.io/search-assistant-augmentation/augment.js"></script>
 ```
 
 Or via Google Tag Manager:
@@ -73,7 +74,7 @@ The script follows a three-step process:
 git clone https://github.com/adorosario/search-augmentation.git
 ```
 
-2. Open `index.html` in your browser to use the testing interface
+2. Open `tester.html` in your browser to use the testing interface
 
 3. Enter any website URL to analyze its CMS and search box implementation
 

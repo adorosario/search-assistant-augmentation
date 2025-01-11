@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CMS & Search Box Detector</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+    
+    }
+    .form {
+      margin: 20px 0;
+      display: flex;
+      justify-content: space-between;
+      gap:10px
+    }
+    input[type="url"] {
+       flex: 1;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      transition: border-color 0.3s ease;
+    }
+    button {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      color: white;
+      background-color: #4a90e2;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+    #result {
+     padding: 1rem;
+      border-radius: 8px;
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      min-height: 100px;
+    }
+    .search-box {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f5f5f5;
+      border-left: 3px solid #4CAF50;
+    }
+  </style>
+</head>
+<body>
+  <h1>CMS & Search Box Detector</h1>
+  <div class="form">
+    <input type="url" id="urlInput" placeholder="Enter website URL" required>
+    <button onclick="detectSite()">Analyze Site</button>
+  </div>
+  <div id="result"></div>
+
+  <script>
+    const CMS_PATTERNS = {
+      'WordPress': {
+        signatures: [
+          'wp-content',
+          'wp-includes',
+          'generator" content="wordpress'
+        ],
+        searchPatterns: [
+          'input[name="s"]',                  
+          '.search-field',                   
+          'form[role="search"] input',     
+          'input.wp-block-search__input',      
+          '.wp-search-form input',
+        ]
+      },
+      'Webflow': {
+        signatures: [
+          'webflow.js',
+          'generator" content="webflow',
+          'w-nav'
+        ],
+        searchPatterns: [
+          '.w-form-input[type="search"]',      
+          '.search-input',                     
+          '[data-search-input]'                
+        ]
+      },
+      'Docusaurus': {
+        signatures: [
+          'generator" content="docusaurus',
+          'docusaurus.config',
+          'docs-doc-page'
+        ],
+        searchPatterns: [
+          '.DocSearch-Input',
+          '.DocSearch-Button',                  
+          '#docsearch-input',                 
+          '.navbar__search-input'   
+        ]
+      },
+      'GitBook': {
+        signatures: [
+          'generator" content="gitbook',
+          'gitbook.js',
+          'gitbook-plugin'
+        ],
+        searchPatterns: [
+          '.book-search-input',               
+          '.gitbook-search-input',            
+          '.searchbox input'                  
+        ]
+      },
+      'Zendesk': {
+        signatures: [
+          'zendesk-widget',
+          'zendesk_app_framework',
+          '/hc/en-us/'
+        ],
+        searchPatterns: [
+          '.search-query',                    
+          '#query',                           
+          '.hc-search-input',                 
+          'input[name="query"]'             
+        ]
+      }
+    };
+
+    function findSearchBoxes(html, detectedCMS) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const searchBoxes = [];
+
+      const cmsPatterns = detectedCMS !== 'Unknown' ? 
+        CMS_PATTERNS[detectedCMS].searchPatterns : [];
+
+      if (cmsPatterns.length > 0) {
+        cmsPatterns.forEach(pattern => {
+          const elements = doc.querySelectorAll(pattern);
+          elements.forEach(el => {
+            searchBoxes.push({
+              type: el.getAttribute('type') || 'text',
+              pattern: pattern,
+              cms: detectedCMS,
+              isDefault: true
+            });
+          });
+        });
+      }
+
+      if (searchBoxes.length === 0) {
+        const inputs = doc.querySelectorAll('input');
+        inputs.forEach(input => {
+          const type = input.getAttribute('type')?.toLowerCase() || '';
+          const placeholder = input.getAttribute('placeholder')?.toLowerCase() || '';
+          const name = input.getAttribute('name')?.toLowerCase() || '';
+          const className = input.className.toLowerCase();
+
+          if (
+            type === 'search' ||
+            placeholder.includes('search') ||
+            name.includes('search') ||
+            className.includes('search')
+          ) {
+            searchBoxes.push({
+              type: type || 'text',
+              placeholder: placeholder,
+              isDefault: false,
+              cms: 'Generic'
+            });
+          }
+        });
+      }
+
+      return searchBoxes;
+    }
+
+    async function detectSite() {
+      const url = document.getElementById('urlInput').value;
+      const result = document.getElementById('result');
+      if(!url){
+       result.innerHTML = `Invalid URl!`;
+       return
+      }
+             
+
+      result.innerHTML = 'Analyzing site...';
+      
+      try {
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
+        const data = await response.json();
+        const html = data.contents;
+        
+        // Detect CMS
+        let detectedCMS = 'Unknown';
+        for (const [cms, config] of Object.entries(CMS_PATTERNS)) {
+          if (config.signatures.some(sign => html.toLowerCase().includes(sign.toLowerCase()))) {
+            detectedCMS = cms;
+            break;
+          }
+        }
+        
+        const searchBoxes = findSearchBoxes(html, detectedCMS);
+        
+        let output = `<strong>Detected CMS:</strong> ${detectedCMS}<br><br>`;
+        output += `<strong>Search Boxes Found:</strong> ${searchBoxes.length}<br>`;
+        
+        if (searchBoxes.length > 0) {
+          searchBoxes.forEach((box, index) => {
+            output += `
+              <div class="search-box">
+                <strong>Search Box ${index + 1}</strong><br>
+                Type: ${box.type}<br>
+                ${box.pattern ? `Pattern: ${box.pattern}<br>` : ''}
+                ${box.placeholder ? `Placeholder: ${box.placeholder}<br>` : ''}
+                CMS: ${box.cms}<br>
+                ${box.isDefault ? 'Default CMS Search Pattern' : 'Generic Search Pattern'}
+              </div>
+            `;
+          });
+        }
+        
+        result.innerHTML = output;
+        
+      } catch (error) {
+        result.innerHTML = `Error: ${error.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
