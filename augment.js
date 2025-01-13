@@ -1,51 +1,5 @@
+import { CMS_PATTERNS } from './CMS_PATTERNS.js';
 (() => {
-  const CMS_PATTERNS = {
-    WordPress: {
-      signatures: ['wp-content', 'wp-includes', 'generator" content="wordpress'],
-      searchPatterns: [
-        'input[name="s"]',
-        '.search-field',
-        'form[role="search"] input',
-        'input.wp-block-search__input',
-        '.wp-search-form input',
-      ],
-    },
-    Webflow: {
-      signatures: ['webflow.js', 'generator" content="webflow', 'w-nav'],
-      searchPatterns: [
-        '.w-form-input[type="search"]',
-        '.search-input',
-        '[data-search-input]',
-      ],
-    },
-    Docusaurus: {
-      signatures: ['generator" content="docusaurus', 'docusaurus.config', 'docs-doc-page'],
-      searchPatterns: [
-        '.DocSearch-Input',
-        '.DocSearch-Button',
-        '#docsearch-input',
-        '.navbar__search-input',
-      ],
-    },
-    GitBook: {
-      signatures: ['generator" content="gitbook', 'gitbook.js', 'gitbook-plugin'],
-      searchPatterns: [
-        '.book-search-input',
-        '.gitbook-search-input',
-        '.searchbox input',
-      ],
-    },
-    Zendesk: {
-      signatures: ['zendesk-widget', 'zendesk_app_framework', '/hc/en-us/'],
-      searchPatterns: [
-        '.search-query',
-        '#query',
-        '.hc-search-input',
-        'input[name="query"]',
-      ],
-    },
-  };
-
   function findSearchBoxes(document, detectedCMS) {
     const searchBoxes = [];
     const cmsPatterns = detectedCMS !== 'Unknown' ? CMS_PATTERNS[detectedCMS].searchPatterns : [];
