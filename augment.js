@@ -84,24 +84,28 @@
   const STYLES = `
     .${NAMESPACE}-wrapper {
       position: relative !important;
-      display: inline-block !important;
+      display: flex !important;
+      align-items: center !important;
       width: 100% !important;
       z-index: 99999 !important;
     }
     .${NAMESPACE}-wrapper input {
+      flex-grow: 1 !important;
       width: 100% !important;
       position: relative !important;
       z-index: 1 !important;
     }
-    .${NAMESPACE}-icon {
-      position: absolute !important;
-      right: 10px !important;
-      top: 50% !important;
-      transform: translateY(-50%) !important;
+    .${NAMESPACE}-button {
+      margin-left: 5px !important;
+      padding: 5px 10px !important;
+      background: #007bff !important;
+      color: white !important;
+      border: none !important;
+      border-radius: 4px !important;
       cursor: pointer !important;
-      padding: 5px !important;
-      z-index: 2 !important;
-      background: transparent !important;
+    }
+    .${NAMESPACE}-button:hover {
+      background: #0056b3 !important;
     }
     .${NAMESPACE}-dropdown {
       position: absolute !important;
@@ -148,31 +152,26 @@
     searchBox.parentNode.insertBefore(wrapper, searchBox);
     wrapper.appendChild(searchBox);
 
+    const aiButton = document.createElement("button");
+    aiButton.className = `${NAMESPACE}-button`;
+    aiButton.textContent = "AI";
+    wrapper.appendChild(aiButton);
+
     const dropdown = document.createElement("div");
     dropdown.className = `${NAMESPACE}-dropdown`;
     wrapper.appendChild(dropdown);
 
-    const searchHandler = debounce(async (e) => {
-      const query = e.target.value;
-      if (query.length >= 2) {
+    aiButton.addEventListener("click", async () => {
+      if (dropdown.classList.contains("active")) {
+        dropdown.classList.remove("active");
+      } else {
         try {
-          const results = await performSearch(query);
+          const results = await performSearch("ai");
           updateDropdown(dropdown, results);
           dropdown.classList.add("active");
         } catch (error) {
           console.error("Search error:", error);
         }
-      } else {
-        dropdown.classList.remove("active");
-      }
-    }, 300);
-
-    searchBox.addEventListener("input", searchHandler);
-
-    searchBox.addEventListener("focus", () => {
-      wrapper.style.zIndex = "99999";
-      if (searchBox.value.length >= 2) {
-        dropdown.classList.add("active");
       }
     });
 
@@ -181,25 +180,6 @@
         dropdown.classList.remove("active");
       }
     });
-
-    // Keyboard navigation
-    searchBox.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        dropdown.classList.remove("active");
-      }
-    });
-  }
-
-  function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
   }
 
   async function performSearch(query) {
@@ -207,11 +187,11 @@
       setTimeout(() => {
         resolve([
           {
-            title: "Result 1 from customGpt Ai",
+            title: "Result 1 from customGpt AI",
             url: "https://researcher.customgpt.ai/",
           },
-          { title: "Result 2 from Open Ai", url: "https://chatgpt.com/" },
-          { title: "Result 3 from Claude Ai", url: "https://claude.ai" },
+          { title: "Result 2 from OpenAI", url: "https://chatgpt.com/" },
+          { title: "Result 3 from Claude AI", url: "https://claude.ai" },
         ]);
       }, 100);
     });
@@ -231,64 +211,7 @@
       .join("");
   }
 
-  function findSearchBoxes(document, detectedCMS) {
-    const searchBoxes = [];
-    const cmsPatterns =
-      detectedCMS !== "Unknown" ? CMS_PATTERNS[detectedCMS].searchPatterns : [];
-
-    if (cmsPatterns.length > 0) {
-      cmsPatterns.forEach((pattern) => {
-        const elements = document.querySelectorAll(pattern);
-        elements.forEach((el) => {
-          if (!el.hasAttribute("data-augmented")) {
-            searchBoxes.push({
-              element: el,
-              type: el.getAttribute("type") || "text",
-              pattern: pattern,
-              cms: detectedCMS,
-              isDefault: true,
-            });
-          }
-        });
-      });
-    }
-
-    if (searchBoxes.length === 0) {
-      const inputs = document.querySelectorAll("input:not([data-augmented])");
-      inputs.forEach((input) => {
-        const type = input.getAttribute("type")?.toLowerCase() || "";
-        const placeholder =
-          input.getAttribute("placeholder")?.toLowerCase() || "";
-        const name = input.getAttribute("name")?.toLowerCase() || "";
-        const className = input.className.toLowerCase();
-
-        if (
-          type === "search" ||
-          placeholder.includes("search") ||
-          name.includes("search") ||
-          className.includes("search")
-        ) {
-          searchBoxes.push({
-            element: input,
-            type: type || "text",
-            placeholder: placeholder,
-            isDefault: false,
-            cms: "Generic",
-          });
-        }
-      });
-    }
-
-    return searchBoxes;
-  }
-
   function detectAndAugmentSite() {
-    // Remove any existing augmentation
-    const existingStyles = document.getElementById(`${NAMESPACE}-styles`);
-    if (existingStyles) {
-      existingStyles.remove();
-    }
-
     const html = document.documentElement.innerHTML;
     let detectedCMS = "Unknown";
 
@@ -305,31 +228,10 @@
 
     injectStyles();
 
-    const searchBoxes = findSearchBoxes(document, detectedCMS);
-    searchBoxes.forEach((searchBox) => {
-      augmentSearchBox(searchBox.element);
-    });
-
-    // Setup mutation observer to handle dynamically added search boxes
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) {
-            // ELEMENT_NODE
-            const newSearchBoxes = findSearchBoxes(node, detectedCMS);
-            newSearchBoxes.forEach((searchBox) => {
-              augmentSearchBox(searchBox.element);
-            });
-          }
-        });
-      });
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
+    const searchBoxes = document.querySelectorAll(
+      "input[type='text'], input[type='search']"
+    );
+    searchBoxes.forEach((searchBox) => augmentSearchBox(searchBox));
     console.log("Detected CMS:", detectedCMS);
     console.log("Search Boxes Augmented:", searchBoxes);
   }
