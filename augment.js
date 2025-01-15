@@ -40,12 +40,19 @@
         "gitbook-plugin",
         'class="gitbook"',
         "/gitbook/assets/",
+        "gb-icon", // Added new signature for modern GitBook
+        "dark:bg-dark-3", // Added new signature for modern GitBook
       ],
       searchPatterns: [
-        ".book-search-input",
-        ".gitbook-search-input",
-        ".searchbox input",
-        "#search-input",
+        // Updated patterns to match modern GitBook structure
+        'input[placeholder="Search content"]',
+        'div[role="dialog"] input.text-dark',
+        'div[role="dialog"][aria-label="Search"] input',
+        "input.text-dark.placeholder\\:text-dark\\/7",
+        ".scroll-nojump input",
+        // Keep some original patterns as fallback
+        "input[placeholder='Search content or ask a question']",
+        "div.flex-row input",
       ],
     },
     Zendesk: {
@@ -81,7 +88,7 @@
       ],
     },
   };
-  const STYLES = `
+  const BASE_STYLES = `
     .${NAMESPACE}-wrapper {
       position: relative !important;
       display: flex !important;
@@ -133,10 +140,86 @@
     }
   `;
 
+  const GITBOOK_STYLES = `
+    .${NAMESPACE}-wrapper {
+      position: relative !important;
+      display: flex !important;
+      align-items: center !important;
+      width: 100% !important;
+      z-index: 99999 !important;
+    }
+    .${NAMESPACE}-wrapper input {
+      flex-grow: 1 !important;
+      width: 100% !important;
+      position: relative !important;
+      z-index: 1 !important;
+    }
+    .${NAMESPACE}-button {
+      margin-right: 5px !important;
+      padding: 5px 10px !important;
+      background: #007bff !important;
+      color: white !important;
+      border: none !important;
+      border-radius: 4px !important;
+      cursor: pointer !important;
+      position: relative !important;
+      z-index: 99999 !important;
+    }
+    .${NAMESPACE}-button:hover {
+      background: #0056b3 !important;
+    }
+    .${NAMESPACE}-dropdown {
+      position: fixed !important;
+      margin-top: 10px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      width: 90% !important;
+      max-width: 585px !important;
+      background: white !important;
+      border: 1px solid #ddd !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+      z-index: 999999 !important;
+      display: none !important;
+    }
+    .${NAMESPACE}-dropdown.active {
+      display: block !important;
+    }
+    .${NAMESPACE}-result {
+      padding: 8px 12px !important;
+      cursor: pointer !important;
+      transition: background-color 0.2s !important;
+      position: relative !important;
+      z-index: 999999 !important;
+    }
+    .${NAMESPACE}-result:hover {
+      background-color: #f5f5f5 !important;
+    }
+    .${NAMESPACE}-result a {
+      z-index: 999999 !important;
+      position: relative !important;
+    }
+  `;
+
+  function detectCMS() {
+    const html = document.documentElement.innerHTML;
+    for (const [cms, config] of Object.entries(CMS_PATTERNS)) {
+      if (
+        config.signatures.some((sign) =>
+          html.toLowerCase().includes(sign.toLowerCase())
+        )
+      ) {
+        return cms;
+      }
+    }
+    return "Unknown";
+  }
+
   function injectStyles() {
+    const cms = detectCMS();
     const styleSheet = document.createElement("style");
     styleSheet.id = `${NAMESPACE}-styles`;
-    styleSheet.textContent = STYLES;
+    styleSheet.textContent = cms === "GitBook" ? GITBOOK_STYLES : BASE_STYLES;
     document.head.appendChild(styleSheet);
   }
 
@@ -146,6 +229,7 @@
     }
 
     searchBox.setAttribute("data-augmented", "true");
+    const cms = detectCMS();
 
     const wrapper = document.createElement("div");
     wrapper.className = `${NAMESPACE}-wrapper`;
@@ -159,9 +243,16 @@
 
     const dropdown = document.createElement("div");
     dropdown.className = `${NAMESPACE}-dropdown`;
-    wrapper.appendChild(dropdown);
 
-    aiButton.addEventListener("click", async () => {
+    // For GitBook, append to body. For others, append to wrapper
+    if (cms === "GitBook") {
+      document.body.appendChild(dropdown);
+    } else {
+      wrapper.appendChild(dropdown);
+    }
+
+    aiButton.addEventListener("click", async (e) => {
+      e.stopPropagation();
       if (dropdown.classList.contains("active")) {
         dropdown.classList.remove("active");
       } else {
@@ -169,6 +260,12 @@
           const results = await performSearch("ai");
           updateDropdown(dropdown, results);
           dropdown.classList.add("active");
+
+          // Position the dropdown for GitBook
+          if (cms === "GitBook") {
+            const buttonRect = aiButton.getBoundingClientRect();
+            dropdown.style.top = `${buttonRect.bottom + window.scrollY}px`;
+          }
         } catch (error) {
           console.error("Search error:", error);
         }
@@ -176,7 +273,7 @@
     });
 
     document.addEventListener("click", (e) => {
-      if (!wrapper.contains(e.target)) {
+      if (!wrapper.contains(e.target) && !dropdown.contains(e.target)) {
         dropdown.classList.remove("active");
       }
     });
@@ -222,15 +319,26 @@
         )
       ) {
         detectedCMS = cms;
+        console.log(
+          `Detected signatures for ${cms}:`,
+          config.signatures.filter((sign) =>
+            html.toLowerCase().includes(sign.toLowerCase())
+          )
+        );
         break;
       }
     }
 
     injectStyles();
 
-    const searchBoxes = document.querySelectorAll(
-      "input[type='text'], input[type='search']"
-    );
+    // Enhanced selector for GitBook
+    const searchBoxes =
+      detectedCMS === "GitBook"
+        ? document.querySelectorAll(
+            CMS_PATTERNS.GitBook.searchPatterns.join(", ")
+          )
+        : document.querySelectorAll("input[type='text'], input[type='search']");
+
     searchBoxes.forEach((searchBox) => augmentSearchBox(searchBox));
     console.log("Detected CMS:", detectedCMS);
     console.log("Search Boxes Augmented:", searchBoxes);
