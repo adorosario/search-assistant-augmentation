@@ -40,17 +40,13 @@
         "gitbook-plugin",
         'class="gitbook"',
         "/gitbook/assets/",
-        "gb-icon", // Added new signature for modern GitBook
-        "dark:bg-dark-3", // Added new signature for modern GitBook
       ],
       searchPatterns: [
-        // Updated patterns to match modern GitBook structure
         'input[placeholder="Search content"]',
         'div[role="dialog"] input.text-dark',
         'div[role="dialog"][aria-label="Search"] input',
         "input.text-dark.placeholder\\:text-dark\\/7",
         ".scroll-nojump input",
-        // Keep some original patterns as fallback
         "input[placeholder='Search content or ask a question']",
         "div.flex-row input",
       ],
