@@ -68,13 +68,7 @@
       ],
     },
     WordPress: {
-      signatures: [
-        "wp-content",
-        "wp-includes",
-        'generator" content="wordpress',
-        "wp-json",
-        'class="wp-',
-      ],
+      signatures: ['generator" content="wordpress'],
       searchPatterns: [
         ".search-field",
         'form[role="search"] input',
@@ -101,101 +95,81 @@
     .${NAMESPACE}-button {
       margin-left: 5px !important;
       padding: 5px 10px !important;
-      background: #007bff !important;
-      color: white !important;
+      background: #fff !important;
+      color: #000 !important;
+      width: 90px !important;
       border: none !important;
       border-radius: 4px !important;
       cursor: pointer !important;
-    }
-    .${NAMESPACE}-button:hover {
-      background: #0056b3 !important;
-    }
-    .${NAMESPACE}-dropdown {
-      position: absolute !important;
-      top: 100% !important;
-      left: 0 !important;
-      width: 100% !important;
-      background: white !important;
-      border: 1px solid #ddd !important;
-      border-radius: 4px !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-      z-index: 99999 !important;
-      display: none !important;
-      margin-top: 5px !important;
-    }
-    .${NAMESPACE}-dropdown.active {
-      display: block !important;
-    }
-    .${NAMESPACE}-result {
-      padding: 8px 12px !important;
-      cursor: pointer !important;
-      transition: background-color 0.2s !important;
-    }
-    .${NAMESPACE}-result:hover {
-      background-color: #f5f5f5 !important;
     }
   `;
 
-  const GITBOOK_STYLES = `
-    .${NAMESPACE}-wrapper {
-      position: relative !important;
-      display: flex !important;
-      align-items: center !important;
-      width: 100% !important;
-      z-index: 99999 !important;
+  function injectCustomGPTScript() {
+    if (
+      !document.querySelector(
+        "script[src='https://cdn.customgpt.ai/js/ai-assistant.js']"
+      )
+    ) {
+      const script = document.createElement("script");
+      script.src = "https://cdn.customgpt.ai/js/ai-assistant.js";
+      script.defer = true;
+      script.setAttribute("p_id", "1403"); // Replace with your actual PROJECT_ID
+      script.setAttribute("p_key", "e2dd2450b0def867a6e1608659ffe944"); // Replace with your actual PROJECT_KEY
+      document.body.appendChild(script);
+      console.log("CustomGPT AI Assistant script loaded.");
     }
-    .${NAMESPACE}-wrapper input {
-      flex-grow: 1 !important;
-      width: 100% !important;
-      position: relative !important;
-      z-index: 1 !important;
+  }
+
+  function injectStyles() {
+    const styleSheet = document.createElement("style");
+    styleSheet.id = `${NAMESPACE}-styles`;
+    styleSheet.textContent = BASE_STYLES;
+    document.head.appendChild(styleSheet);
+  }
+
+  function augmentSearchBox(searchBox) {
+    if (searchBox.hasAttribute("data-augmented")) {
+      return;
     }
-    .${NAMESPACE}-button {
-      margin-right: 5px !important;
-      padding: 5px 10px !important;
-      background: #007bff !important;
-      color: white !important;
-      border: none !important;
-      border-radius: 4px !important;
-      cursor: pointer !important;
-      position: relative !important;
-      z-index: 99999 !important;
-    }
-    .${NAMESPACE}-button:hover {
-      background: #0056b3 !important;
-    }
-    .${NAMESPACE}-dropdown {
-      position: fixed !important;
-      margin-top: 10px !important;
-      left: 50% !important;
-      transform: translateX(-50%) !important;
-      width: 90% !important;
-      max-width: 585px !important;
-      background: white !important;
-      border: 1px solid #ddd !important;
-      border-radius: 8px !important;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-      z-index: 999999 !important;
-      display: none !important;
-    }
-    .${NAMESPACE}-dropdown.active {
-      display: block !important;
-    }
-    .${NAMESPACE}-result {
-      padding: 8px 12px !important;
-      cursor: pointer !important;
-      transition: background-color 0.2s !important;
-      position: relative !important;
-      z-index: 999999 !important;
-    }
-    .${NAMESPACE}-result:hover {
-      background-color: #f5f5f5 !important;
-    }
-    .${NAMESPACE}-result a {
-      z-index: 999999 !important;
-      position: relative !important;
-    }
-  `;
+
+    searchBox.setAttribute("data-augmented", "true");
+    const wrapper = document.createElement("div");
+    wrapper.className = `${NAMESPACE}-wrapper`;
+    searchBox.parentNode.insertBefore(wrapper, searchBox);
+    wrapper.appendChild(searchBox);
+
+    const aiButton = document.createElement("button");
+    aiButton.className = `${NAMESPACE}-button`;
+    aiButton.setAttribute("data-cgpt-ai-assistant", "true");
+    aiButton.innerHTML = `
+   <div style="display: flex; align-items: center; justify-content: center; gap: 2px;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="repeat" style="width: 16px; height: 16px;">
+      <g>
+        <path d="M17.91 5h-12l1.3-1.29a1 1 0 0 0-1.42-1.42l-3 3a1 1 0 0 0 0 1.42l3 3a1 1 0 0 0 1.42 0 1 1 0 0 0 0-1.42L5.91 7h12a1.56 1.56 0 0 1 1.59 1.53V11a1 1 0 0 0 2 0V8.53A3.56 3.56 0 0 0 17.91 5zm.3 9.29a1 1 0 0 0-1.42 1.42l1.3 1.29h-12a1.56 1.56 0 0 1-1.59-1.53V13a1 1 0 0 0-2 0v2.47A3.56 3.56 0 0 0 6.09 19h12l-1.3 1.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3-3a1 1 0 0 0 0-1.42z"></path>
+      </g>
+    </svg>
+    <div style="font-size: 14px; font-weight: 500;">Ask AI</div>
+  </div>
+`;
+
+    wrapper.appendChild(aiButton);
+  }
+
+  function detectAndAugmentSite() {
+    injectCustomGPTScript();
+    injectStyles();
+
+    const detectedCMS = detectCMS();
+    const searchBoxes =
+      detectedCMS === "GitBook"
+        ? document.querySelectorAll(
+            CMS_PATTERNS.GitBook.searchPatterns.join(", ")
+          )
+        : document.querySelectorAll("input[type='text'], input[type='search']");
+
+    searchBoxes.forEach((searchBox) => augmentSearchBox(searchBox));
+    console.log("Detected CMS:", detectedCMS);
+  }
 
   function detectCMS() {
     const html = document.documentElement.innerHTML;
@@ -209,135 +183,6 @@
       }
     }
     return "Unknown";
-  }
-
-  function injectStyles() {
-    const cms = detectCMS();
-    const styleSheet = document.createElement("style");
-    styleSheet.id = `${NAMESPACE}-styles`;
-    styleSheet.textContent = cms === "GitBook" ? GITBOOK_STYLES : BASE_STYLES;
-    document.head.appendChild(styleSheet);
-  }
-
-  function augmentSearchBox(searchBox) {
-    if (searchBox.hasAttribute("data-augmented")) {
-      return;
-    }
-
-    searchBox.setAttribute("data-augmented", "true");
-    const cms = detectCMS();
-
-    const wrapper = document.createElement("div");
-    wrapper.className = `${NAMESPACE}-wrapper`;
-    searchBox.parentNode.insertBefore(wrapper, searchBox);
-    wrapper.appendChild(searchBox);
-
-    const aiButton = document.createElement("button");
-    aiButton.className = `${NAMESPACE}-button`;
-    aiButton.textContent = "AI";
-    wrapper.appendChild(aiButton);
-
-    const dropdown = document.createElement("div");
-    dropdown.className = `${NAMESPACE}-dropdown`;
-
-    // For GitBook, append to body. For others, append to wrapper
-    if (cms === "GitBook") {
-      document.body.appendChild(dropdown);
-    } else {
-      wrapper.appendChild(dropdown);
-    }
-
-    aiButton.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      if (dropdown.classList.contains("active")) {
-        dropdown.classList.remove("active");
-      } else {
-        try {
-          const results = await performSearch("ai");
-          updateDropdown(dropdown, results);
-          dropdown.classList.add("active");
-
-          // Position the dropdown for GitBook
-          if (cms === "GitBook") {
-            const buttonRect = aiButton.getBoundingClientRect();
-            dropdown.style.top = `${buttonRect.bottom + window.scrollY}px`;
-          }
-        } catch (error) {
-          console.error("Search error:", error);
-        }
-      }
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!wrapper.contains(e.target) && !dropdown.contains(e.target)) {
-        dropdown.classList.remove("active");
-      }
-    });
-  }
-
-  async function performSearch(query) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([
-          {
-            title: "Result 1 from customGpt AI",
-            url: "https://researcher.customgpt.ai/",
-          },
-          { title: "Result 2 from OpenAI", url: "https://chatgpt.com/" },
-          { title: "Result 3 from Claude AI", url: "https://claude.ai" },
-        ]);
-      }, 100);
-    });
-  }
-
-  function updateDropdown(dropdown, results) {
-    dropdown.innerHTML = results
-      .map(
-        (result) => `
-        <div class="${NAMESPACE}-result">
-          <a href="${result.url}" style="display: block !important; text-decoration: none !important; color: #000 !important;">
-            ${result.title}
-          </a>
-        </div>
-      `
-      )
-      .join("");
-  }
-
-  function detectAndAugmentSite() {
-    const html = document.documentElement.innerHTML;
-    let detectedCMS = "Unknown";
-
-    for (const [cms, config] of Object.entries(CMS_PATTERNS)) {
-      if (
-        config.signatures.some((sign) =>
-          html.toLowerCase().includes(sign.toLowerCase())
-        )
-      ) {
-        detectedCMS = cms;
-        console.log(
-          `Detected signatures for ${cms}:`,
-          config.signatures.filter((sign) =>
-            html.toLowerCase().includes(sign.toLowerCase())
-          )
-        );
-        break;
-      }
-    }
-
-    injectStyles();
-
-    // Enhanced selector for GitBook
-    const searchBoxes =
-      detectedCMS === "GitBook"
-        ? document.querySelectorAll(
-            CMS_PATTERNS.GitBook.searchPatterns.join(", ")
-          )
-        : document.querySelectorAll("input[type='text'], input[type='search']");
-
-    searchBoxes.forEach((searchBox) => augmentSearchBox(searchBox));
-    console.log("Detected CMS:", detectedCMS);
-    console.log("Search Boxes Augmented:", searchBoxes);
   }
 
   if (document.readyState === "loading") {
