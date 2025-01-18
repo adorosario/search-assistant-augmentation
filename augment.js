@@ -113,8 +113,8 @@
       const script = document.createElement("script");
       script.src = "https://cdn.customgpt.ai/js/ai-assistant.js";
       script.defer = true;
-      script.setAttribute("p_id", "1403");
-      script.setAttribute("p_key", "e2dd2450b0def867a6e1608659ffe944");
+      script.setAttribute("p_id", "1037");
+      script.setAttribute("p_key", "50fc33cd7f1f79e4958d705fb062bb0e");
       document.body.appendChild(script);
       console.log("CustomGPT AI Assistant script loaded.");
     }
