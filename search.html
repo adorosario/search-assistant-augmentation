@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        font-family: arial;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px;
+        max-width: 400px;
+      }
+
+      .controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .select-style {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .input-container {
+        display: flex;
+        align-items: center;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 8px 16px;
+        position: relative;
+      }
+
+      .animated-input {
+        border: none;
+        outline: none;
+        font-size: 16px;
+        width: 100%;
+        color: #666;
+      }
+
+      .placeholder-text {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        pointer-events: none;
+        transition: opacity 0.5s ease;
+        opacity: 0;
+        z-index: 99999;
+      }
+
+      .sparkle-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 33px;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      label {
+        font-size: 14px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="controls">
+        <label for="animationStyle">Animation Style:</label>
+        <select id="animationStyle" class="select-style">
+          <option value="type">Typing</option>
+          <option value="fade">Fade</option>
+        </select>
+      </div>
+
+      <div class="input-container">
+        <input type="text" class="animated-input" id="animatedInput" />
+        <div class="placeholder-text" id="placeholderText"></div>
+      </div>
+    </div>
+
+    <script>
+      // Configuration object
+      const config = {
+        strings: [
+          "What does it cost?",
+          "How much is shipping?",
+          "Any discounts available?",
+          "Do you offer financing?",
+        ],
+        animationStyle: "type",
+        typingSpeed: 100,
+        deletingSpeed: 50,
+        fadeInDuration: 500,
+        fadeOutDuration: 500,
+        pauseBetweenStrings: 3000,
+        pauseBetweenCycles: 1000,
+      };
+
+      const input = document.getElementById("animatedInput");
+      const placeholder = document.getElementById("placeholderText");
+      const styleSelect = document.getElementById("animationStyle");
+      let currentStringIndex = 0;
+      let currentCharIndex = 0;
+      let isDeleting = false;
+      let animationTimeout = null;
+
+      function clearTimeouts() {
+        if (animationTimeout) {
+          clearTimeout(animationTimeout);
+        }
+      }
+
+      function fadeAnimation() {
+        clearTimeouts();
+        placeholder.textContent = config.strings[currentStringIndex];
+        placeholder.style.opacity = "1";
+
+        animationTimeout = setTimeout(() => {
+          placeholder.style.opacity = "0";
+
+          animationTimeout = setTimeout(() => {
+            currentStringIndex =
+              (currentStringIndex + 1) % config.strings.length;
+            if (currentStringIndex === 0) {
+              animationTimeout = setTimeout(
+                fadeAnimation,
+                config.pauseBetweenCycles
+              );
+            } else {
+              animationTimeout = setTimeout(fadeAnimation, 0);
+            }
+          }, config.fadeOutDuration);
+        }, config.pauseBetweenStrings);
+      }
+
+      function typeAnimation() {
+        clearTimeouts();
+        const currentText = config.strings[currentStringIndex];
+
+        if (isDeleting) {
+          placeholder.textContent = currentText.substring(
+            0,
+            currentCharIndex - 1
+          );
+          currentCharIndex--;
+
+          if (currentCharIndex === 0) {
+            isDeleting = false;
+            currentStringIndex =
+              (currentStringIndex + 1) % config.strings.length;
+
+            if (currentStringIndex === 0) {
+              animationTimeout = setTimeout(
+                typeAnimation,
+                config.pauseBetweenCycles
+              );
+              return;
+            }
+
+            animationTimeout = setTimeout(
+              typeAnimation,
+              config.pauseBetweenStrings
+            );
+            return;
+          }
+        } else {
+          placeholder.textContent = currentText.substring(
+            0,
+            currentCharIndex + 1
+          );
+          currentCharIndex++;
+
+          if (currentCharIndex === currentText.length) {
+            isDeleting = true;
+            animationTimeout = setTimeout(
+              typeAnimation,
+              config.pauseBetweenStrings
+            );
+            return;
+          }
+        }
+
+        animationTimeout = setTimeout(
+          typeAnimation,
+          isDeleting ? config.deletingSpeed : config.typingSpeed
+        );
+      }
+
+      function startAnimation() {
+        clearTimeouts();
+        placeholder.style.opacity = "1";
+        currentStringIndex = 0;
+        currentCharIndex = 0;
+        isDeleting = false;
+
+        if (config.animationStyle === "fade") {
+          fadeAnimation();
+        } else {
+          typeAnimation();
+        }
+      }
+
+      // Handle animation style changes
+      styleSelect.addEventListener("change", function () {
+        config.animationStyle = this.value;
+        startAnimation();
+      });
+
+      // Reset animation when input is cleared
+      input.addEventListener("input", function () {
+        if (this.value === "") {
+          startAnimation();
+        } else {
+          placeholder.style.opacity = "0";
+          clearTimeouts();
+        }
+      });
+
+      setTimeout(startAnimation, 500);
+    </script>
+    <script src="/augment.js"></script>
+  </body>
+</html>

@@ -1,178 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CMS & Search Box Detector</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 20px auto;
-      padding: 20px;
-    
-    }
-    .form {
-      margin: 20px 0;
-      display: flex;
-      justify-content: space-between;
-      gap:10px
-    }
-    input[type="url"] {
-       flex: 1;
-      padding: 0.75rem;
-      font-size: 1rem;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      transition: border-color 0.3s ease;
-    }
-    button {
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      color: white;
-      background-color: #4a90e2;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: opacity 0.3s ease;
-    }
-    #result {
-     padding: 1rem;
-      border-radius: 8px;
-      background-color: #f8f9fa;
-      border: 1px solid #dee2e6;
-      min-height: 100px;
-    }
-    .search-box {
-      margin-top: 10px;
-      padding: 10px;
-      background: #f5f5f5;
-      border-left: 3px solid #4CAF50;
-    }
-  </style>
-</head>
-<body>
-  <h1>CMS & Search Box Detector</h1>
-  <div class="form">
-    <input type="url" id="urlInput" placeholder="Enter website URL" required>
-    <button onclick="detectSite()">Analyze Site</button>
-  </div>
-  <div id="result"></div>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script type="module">
-    import { CMS_PATTERNS } from './CMS_PATTERNS.js';
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CMS & Search Box Detector</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+      }
+      .form {
+        margin: 20px 0;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      input[type="url"] {
+        flex: 1;
+        padding: 0.75rem;
+        font-size: 1rem;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        transition: border-color 0.3s ease;
+      }
+      button {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        color: white;
+        background-color: #4a90e2;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+      }
+      #result {
+        padding: 1rem;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        min-height: 100px;
+      }
+      .search-box {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f5f5f5;
+        border-left: 3px solid #4caf50;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CMS & Search Box Detector</h1>
+    <div class="form">
+      <input
+        type="url"
+        id="urlInput"
+        placeholder="Enter website URL"
+        required
+      />
+      <button onclick="detectSite()">Analyze Site</button>
+    </div>
+    <div id="result"></div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script type="module">
+      import { CMS_PATTERNS } from "./CMS_PATTERNS.js";
 
-    function findSearchBoxes(html, detectedCMS) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const searchBoxes = [];
+      function findSearchBoxes(html, detectedCMS) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const searchBoxes = [];
 
-      const cmsPatterns = detectedCMS !== 'Unknown' ? 
-        CMS_PATTERNS[detectedCMS].searchPatterns : [];
+        const cmsPatterns =
+          detectedCMS !== "Unknown"
+            ? CMS_PATTERNS[detectedCMS].searchPatterns
+            : [];
 
-      if (cmsPatterns.length > 0) {
-        cmsPatterns.forEach(pattern => {
-          const elements = doc.querySelectorAll(pattern);
-          elements.forEach(el => {
-            searchBoxes.push({
-              type: el.getAttribute('type') || 'text',
-              pattern: pattern,
-              cms: detectedCMS,
-              isDefault: true
+        if (cmsPatterns.length > 0) {
+          cmsPatterns.forEach((pattern) => {
+            const elements = doc.querySelectorAll(pattern);
+            elements.forEach((el) => {
+              searchBoxes.push({
+                type: el.getAttribute("type") || "text",
+                pattern: pattern,
+                cms: detectedCMS,
+                isDefault: true,
+              });
             });
           });
-        });
-      }
-
-      if (searchBoxes.length === 0) {
-        const inputs = doc.querySelectorAll('input');
-        inputs.forEach(input => {
-          const type = input.getAttribute('type')?.toLowerCase() || '';
-          const placeholder = input.getAttribute('placeholder')?.toLowerCase() || '';
-          const name = input.getAttribute('name')?.toLowerCase() || '';
-          const className = input.className.toLowerCase();
-
-          if (
-            type === 'search' ||
-            placeholder.includes('search') ||
-            name.includes('search') ||
-            className.includes('search')
-          ) {
-            searchBoxes.push({
-              type: type || 'text',
-              placeholder: placeholder,
-              isDefault: false,
-              cms: 'Generic'
-            });
-          }
-        });
-      }
-
-      return searchBoxes;
-    }
-
-  async function detectSite() {
-     const input = document.getElementById('urlInput').value;
-  const result = document.getElementById('result');
-
-  if (!input) {
-    result.innerHTML = `Invalid input! Please enter a domain name or URL.`;
-    return;
-  }
-
-  const formatInputAsUrl = (input) => {
-    try {
-      new URL(input);
-      return input;
-    } catch {
-      return `https://${input}`;
-    }
-  };
-   const url = formatInputAsUrl(input);
-
-  result.innerHTML = 'Analyzing site...';
-      
-      try {
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-       const response = await axios.get(proxyUrl);
-        const html = response.data.contents;
-        console.log(html);
-        
-        let detectedCMS = 'Unknown';
-        for (const [cms, config] of Object.entries(CMS_PATTERNS)) {
-          if (config.signatures.some(sign => html.toLowerCase().includes(sign.toLowerCase()))) {
-            detectedCMS = cms;
-            break;
-          }
         }
-        
-        const searchBoxes = findSearchBoxes(html, detectedCMS);
-        
-        let output = `<strong>Detected CMS:</strong> ${detectedCMS}<br><br>`;
-        output += `<strong>Search Boxes Found:</strong> ${searchBoxes.length}<br>`;
-        
-        if (searchBoxes.length > 0) {
-          searchBoxes.forEach((box, index) => {
-            output += `
+
+        if (searchBoxes.length === 0) {
+          const inputs = doc.querySelectorAll("input");
+          inputs.forEach((input) => {
+            const type = input.getAttribute("type")?.toLowerCase() || "";
+            const placeholder =
+              input.getAttribute("placeholder")?.toLowerCase() || "";
+            const name = input.getAttribute("name")?.toLowerCase() || "";
+            const className = input.className.toLowerCase();
+
+            if (
+              type === "search" ||
+              placeholder.includes("search") ||
+              name.includes("search") ||
+              className.includes("search")
+            ) {
+              searchBoxes.push({
+                type: type || "text",
+                placeholder: placeholder,
+                isDefault: false,
+                cms: "Generic",
+              });
+            }
+          });
+        }
+
+        return searchBoxes;
+      }
+
+      async function detectSite() {
+        const input = document.getElementById("urlInput").value;
+        const result = document.getElementById("result");
+
+        if (!input) {
+          result.innerHTML = `Invalid input! Please enter a domain name or URL.`;
+          return;
+        }
+
+        const formatInputAsUrl = (input) => {
+          try {
+            new URL(input);
+            return input;
+          } catch {
+            return `https://${input}`;
+          }
+        };
+        const url = formatInputAsUrl(input);
+
+        result.innerHTML = "Analyzing site...";
+
+        try {
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(
+            url
+          )}`;
+          const response = await axios.get(proxyUrl);
+          const html = response.data.contents;
+          let detectedCMS = "Unknown";
+          for (const [cms, config] of Object.entries(CMS_PATTERNS)) {
+            if (
+              config.signatures.some((sign) =>
+                html.toLowerCase().includes(sign.toLowerCase())
+              )
+            ) {
+              detectedCMS = cms;
+              break;
+            }
+          }
+
+          const searchBoxes = findSearchBoxes(html, detectedCMS);
+
+          let output = `<strong>Detected CMS:</strong> ${detectedCMS}<br><br>`;
+          if (detectedCMS !== "Unknown")
+            output += `<strong>Search Boxes Found:</strong> ${searchBoxes.length}<br>`;
+
+          if (detectedCMS !== "Unknown" && searchBoxes.length > 0) {
+            searchBoxes.forEach((box, index) => {
+              output += `
               <div class="search-box">
                 <strong>Search Box ${index + 1}</strong><br>
                 Type: ${box.type}<br>
-                ${box.pattern ? `Pattern: ${box.pattern}<br>` : ''}
-                ${box.placeholder ? `Placeholder: ${box.placeholder}<br>` : ''}
+                ${box.pattern ? `Pattern: ${box.pattern}<br>` : ""}
+                ${box.placeholder ? `Placeholder: ${box.placeholder}<br>` : ""}
                 CMS: ${box.cms}<br>
-                ${box.isDefault ? 'Default CMS Search Pattern' : 'Generic Search Pattern'}
+                ${
+                  box.isDefault
+                    ? "Default CMS Search Pattern"
+                    : "Generic Search Pattern"
+                }
               </div>
             `;
-          });
+            });
+          }
+
+          result.innerHTML = output;
+        } catch (error) {
+          result.innerHTML = `Error: ${error.message}`;
         }
-        
-        result.innerHTML = output;
-        
-      } catch (error) {
-        result.innerHTML = `Error: ${error.message}`;
       }
-    }
-    window.detectSite = detectSite;
-  </script>
-</body>
+      window.detectSite = detectSite;
+    </script>
+  </body>
 </html>
