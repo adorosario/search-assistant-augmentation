@@ -145,8 +145,6 @@
           )}`;
           const response = await axios.get(proxyUrl);
           const html = response.data.contents;
-          console.log(html);
-
           let detectedCMS = "Unknown";
           for (const [cms, config] of Object.entries(CMS_PATTERNS)) {
             if (
@@ -162,9 +160,10 @@
           const searchBoxes = findSearchBoxes(html, detectedCMS);
 
           let output = `<strong>Detected CMS:</strong> ${detectedCMS}<br><br>`;
-          output += `<strong>Search Boxes Found:</strong> ${searchBoxes.length}<br>`;
+          if (detectedCMS !== "Unknown")
+            output += `<strong>Search Boxes Found:</strong> ${searchBoxes.length}<br>`;
 
-          if (searchBoxes.length > 0) {
+          if (detectedCMS !== "Unknown" && searchBoxes.length > 0) {
             searchBoxes.forEach((box, index) => {
               output += `
               <div class="search-box">
