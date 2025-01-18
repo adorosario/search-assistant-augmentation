@@ -95,6 +95,7 @@
   .${NAMESPACE}-button {
     padding-right: 10px !important;
     padding-left: 0 !important;
+    margin-right: 5px !important;
     background: linear-gradient(135deg, #C362E4, #A065E9 35%, #6C67EF 68%, #5D93F4) !important;
     color: #fff !important;
     width: 70px !important;
