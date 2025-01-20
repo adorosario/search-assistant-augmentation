@@ -66,7 +66,11 @@ export const CMS_PATTERNS = {
     ],
   },
   WordPress: {
-    signatures: ['generator" content="wordpress'],
+    signatures: [
+      'generator" content="wordpress',
+      "/wp-includes/css",
+      "/wp-content/cache",
+    ],
     searchPatterns: [
       ".search-field",
       'form[role="search"] input',

@@ -68,7 +68,11 @@
       ],
     },
     WordPress: {
-      signatures: ['generator" content="wordpress'],
+      signatures: [
+        'generator" content="wordpress',
+        "/wp-includes/css",
+        "/wp-content/cache",
+      ],
       searchPatterns: [
         ".search-field",
         'form[role="search"] input',
@@ -128,7 +132,7 @@
     document.head.appendChild(styleSheet);
   }
 
-  function augmentSearchBox(searchBox) {
+  function augmentSearchBox(searchBox, isWordPress) {
     if (searchBox.hasAttribute("data-augmented")) {
       return;
     }
@@ -142,6 +146,11 @@
     const aiButton = document.createElement("button");
     aiButton.className = `${NAMESPACE}-button`;
     aiButton.setAttribute("data-cgpt-ai-assistant", "true");
+    if (isWordPress) {
+      aiButton.style.position = "relative";
+      aiButton.style.right = "74px";
+      aiButton.style.zIndex = "30";
+    }
     aiButton.innerHTML = `
    <div style="display: flex; align-items: center; justify-content: center;">
 <svg width="22" height="22" viewBox="0 0 67 65" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -200,7 +209,9 @@
           )
         : document.querySelectorAll("input[type='text'], input[type='search']");
 
-    searchBoxes.forEach((searchBox) => augmentSearchBox(searchBox));
+    searchBoxes.forEach((searchBox) =>
+      augmentSearchBox(searchBox, detectedCMS === "WordPress")
+    );
     console.log("Detected CMS:", detectedCMS);
   }
 
